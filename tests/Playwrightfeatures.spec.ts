@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 
+// Section: Standard-user authentication
 async function loginAsStandardUser(page: Page) {
   await page.goto('https://www.saucedemo.com/');
   await page.locator('[data-test="username"]').fill('standard_user');
@@ -8,6 +9,7 @@ async function loginAsStandardUser(page: Page) {
   await expect(page).toHaveURL(/\/inventory\.html$/);
 }
 
+// Section: Named-user authentication
 async function loginAsUser(page: Page, username: string) {
   await page.goto('https://www.saucedemo.com/');
   await page.locator('[data-test="username"]').fill(username);
@@ -16,6 +18,7 @@ async function loginAsUser(page: Page, username: string) {
   await expect(page).toHaveURL(/\/inventory\.html$/);
 }
 
+// Section: Shared checkout setup
 async function continueToCheckoutOverview(page: Page, username: string) {
   await loginAsUser(page, username);
 
@@ -35,12 +38,14 @@ async function continueToCheckoutOverview(page: Page, username: string) {
   await page.locator('[data-test="continue"]').click();
 }
 
+// Section: Site availability and title
 test('SauceDemo page loads with the expected title', async ({ page }) => {
   await page.goto('https://www.saucedemo.com/');
 
   await expect(page).toHaveTitle(/Swag Labs/i);
 });
 
+// Section: Successful product-page login
 test('user can log in and see the products page', async ({ page }) => {
   await page.goto('https://www.saucedemo.com/');
 
@@ -53,6 +58,7 @@ test('user can log in and see the products page', async ({ page }) => {
   await expect(page.locator('[data-test="inventory-item"]')).not.toHaveCount(0);
 });
 
+// Section: Single-product purchase flow
 test('user can purchase one in-stock product', async ({ page }) => {
   await loginAsStandardUser(page);
 
@@ -75,6 +81,7 @@ test('user can purchase one in-stock product', async ({ page }) => {
   await expect(page.locator('[data-test="complete-header"]')).toHaveText('Thank you for your order!');
 });
 
+// Section: Multi-product cart and checkout flow
 test('user can select multiple products, remove one, and checkout the remaining product', async ({ page }) => {
   await loginAsStandardUser(page);
 
@@ -105,6 +112,7 @@ test('user can select multiple products, remove one, and checkout the remaining 
   await expect(page.locator('[data-test="complete-header"]')).toHaveText('Thank you for your order!');
 });
 
+// Section: Missing first-name validation
 test('checkout requires a first name', async ({ page }) => {
   await loginAsStandardUser(page);
   await page.locator('[data-test="inventory-item"]')
@@ -122,12 +130,14 @@ test('checkout requires a first name', async ({ page }) => {
   await expect(page).toHaveURL(/checkout-step-one\.html$/);
 });
 
+// Section: Accounts that complete checkout successfully
 const checkoutUsers = [
   'standard_user',
   'performance_glitch_user',
   'visual_user',
 ];
 
+// Section: Successful checkout outcomes
 for (const username of checkoutUsers) {
   test(`${username} can complete checkout`, async ({ page }) => {
     await continueToCheckoutOverview(page, username);
@@ -141,6 +151,7 @@ for (const username of checkoutUsers) {
   });
 }
 
+// Section: Checkout blocked for problem_user
 test('problem_user remains on checkout information after Continue', async ({ page }) => {
   await continueToCheckoutOverview(page, 'problem_user');
 
@@ -149,6 +160,7 @@ test('problem_user remains on checkout information after Continue', async ({ pag
   await expect(page).toHaveURL(/checkout-step-one\.html$/);
 });
 
+// Section: Checkout blocked for error_user
 test('error_user remains on checkout overview after Finish', async ({ page }) => {
   await continueToCheckoutOverview(page, 'error_user');
 
@@ -159,6 +171,7 @@ test('error_user remains on checkout overview after Finish', async ({ page }) =>
   await expect(page.locator('[data-test="complete-header"]')).toHaveCount(0);
 });
 
+// Section: Locked account authentication rejection
 test('locked_out_user cannot log in', async ({ page }) => {
   await page.goto('https://www.saucedemo.com/');
   await page.locator('[data-test="username"]').fill('locked_out_user');
