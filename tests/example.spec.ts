@@ -2,19 +2,21 @@ import { test, expect } from '@playwright/test';
 
 // Section: Homepage title assertion
 test('has title', async ({ page }) => {
+  // Step: Open the Playwright documentation homepage.
   await page.goto('https://playwright.dev/');
 
-  // Expect a title "to contain" a substring.
+  // Step: Confirm the page title identifies the site.
   await expect(page).toHaveTitle(/Playwright/);
 });
 
 // Section: Getting started navigation and page assertion
 test('get started link', async ({ page }) => {
+  // Step: Open the documentation homepage.
   await page.goto('https://playwright.dev/');
 
-  // Click the get started link.
+  // Step: Navigate to the getting-started documentation.
   await page.getByRole('link', { name: 'Get started' }).click();
 
-  // Expects page to have a heading with the name of Installation.
+  // Step: Verify that the installation guide is displayed.
   await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
 });
