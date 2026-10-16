@@ -11,8 +11,11 @@ const checkoutUsers = [
 async function login(page: Page, username: string) {
   // Step: Open SauceDemo and enter the selected account credentials.
   await page.goto('https://www.saucedemo.com/');
+  await expect(page.locator('[data-test="username"]')).toBeVisible();
   await page.locator('[data-test="username"]').fill(username);
   await page.locator('[data-test="password"]').fill('secret_sauce');
+  await expect(page.locator('[data-test="username"]')).toHaveValue(username);
+  await expect(page.locator('[data-test="password"]')).toHaveValue('secret_sauce');
   // Step: Submit login and confirm the inventory page opens.
   await page.locator('[data-test="login-button"]').click();
   await expect(page).toHaveURL(/\/inventory\.html$/);
@@ -33,12 +36,21 @@ async function continueToCheckoutOverview(page: Page, username: string) {
   await expect(page.locator('[data-test="inventory-item-name"]'))
     .toHaveText(['Sauce Labs Backpack']);
   await page.locator('[data-test="checkout"]').click();
+  await expect(page.locator('[data-test="title"]')).toHaveText('Checkout: Your Information');
 
   // Step: Complete checkout information and continue to the overview.
   await page.locator('[data-test="firstName"]').fill('Test');
   await page.locator('[data-test="lastName"]').fill('Customer');
   await page.locator('[data-test="postalCode"]').fill('10001');
+  if (username !== 'problem_user' && username !== 'error_user') {
+    await expect(page.locator('[data-test="firstName"]')).toHaveValue('Test');
+    await expect(page.locator('[data-test="lastName"]')).toHaveValue('Customer');
+    await expect(page.locator('[data-test="postalCode"]')).toHaveValue('10001');
+  }
   await page.locator('[data-test="continue"]').click();
+  await expect(page.locator('[data-test="title"]')).toHaveText(
+    username === 'problem_user' ? 'Checkout: Your Information' : 'Checkout: Overview',
+  );
 }
 
 // Section: Successful checkout outcomes by account
@@ -86,8 +98,11 @@ test('error_user remains on checkout overview after Finish', async ({ page }) =>
 test('locked_out_user cannot log in', async ({ page }) => {
   // Step: Open SauceDemo and enter credentials for the locked account.
   await page.goto('https://www.saucedemo.com/');
+  await expect(page.locator('[data-test="username"]')).toBeVisible();
   await page.locator('[data-test="username"]').fill('locked_out_user');
   await page.locator('[data-test="password"]').fill('secret_sauce');
+  await expect(page.locator('[data-test="username"]')).toHaveValue('locked_out_user');
+  await expect(page.locator('[data-test="password"]')).toHaveValue('secret_sauce');
   await page.locator('[data-test="login-button"]').click();
 
   // Step: Verify the access-denied message and unchanged login URL.

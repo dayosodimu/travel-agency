@@ -4,8 +4,11 @@ import { test, expect, type Page } from '@playwright/test';
 async function loginAsStandardUser(page: Page) {
   // Step: Open SauceDemo and enter standard-user credentials.
   await page.goto('https://www.saucedemo.com/');
+  await expect(page.locator('[data-test="username"]')).toBeVisible();
   await page.locator('[data-test="username"]').fill('standard_user');
   await page.locator('[data-test="password"]').fill('secret_sauce');
+  await expect(page.locator('[data-test="username"]')).toHaveValue('standard_user');
+  await expect(page.locator('[data-test="password"]')).toHaveValue('secret_sauce');
   // Step: Submit login and confirm the inventory page opens.
   await page.locator('[data-test="login-button"]').click();
   await expect(page).toHaveURL(/\/inventory\.html$/);
@@ -15,8 +18,11 @@ async function loginAsStandardUser(page: Page) {
 async function loginAsUser(page: Page, username: string) {
   // Step: Open SauceDemo and enter the requested account credentials.
   await page.goto('https://www.saucedemo.com/');
+  await expect(page.locator('[data-test="username"]')).toBeVisible();
   await page.locator('[data-test="username"]').fill(username);
   await page.locator('[data-test="password"]').fill('secret_sauce');
+  await expect(page.locator('[data-test="username"]')).toHaveValue(username);
+  await expect(page.locator('[data-test="password"]')).toHaveValue('secret_sauce');
   // Step: Submit login and verify navigation to inventory.
   await page.locator('[data-test="login-button"]').click();
   await expect(page).toHaveURL(/\/inventory\.html$/);
@@ -37,12 +43,21 @@ async function continueToCheckoutOverview(page: Page, username: string) {
   await expect(page.locator('[data-test="inventory-item-name"]'))
     .toHaveText(['Sauce Labs Backpack']);
   await page.locator('[data-test="checkout"]').click();
+  await expect(page.locator('[data-test="title"]')).toHaveText('Checkout: Your Information');
 
   // Step: Enter checkout information and continue to the overview.
   await page.locator('[data-test="firstName"]').fill('Test');
   await page.locator('[data-test="lastName"]').fill('Customer');
   await page.locator('[data-test="postalCode"]').fill('10001');
+  if (username !== 'problem_user' && username !== 'error_user') {
+    await expect(page.locator('[data-test="firstName"]')).toHaveValue('Test');
+    await expect(page.locator('[data-test="lastName"]')).toHaveValue('Customer');
+    await expect(page.locator('[data-test="postalCode"]')).toHaveValue('10001');
+  }
   await page.locator('[data-test="continue"]').click();
+  await expect(page.locator('[data-test="title"]')).toHaveText(
+    username === 'problem_user' ? 'Checkout: Your Information' : 'Checkout: Overview',
+  );
 }
 
 // Section: Site availability and title
@@ -58,9 +73,12 @@ test('SauceDemo page loads with the expected title', async ({ page }) => {
 test('user can log in and see the products page', async ({ page }) => {
   // Step: Open the login page and enter standard-user credentials.
   await page.goto('https://www.saucedemo.com/');
+  await expect(page.locator('[data-test="username"]')).toBeVisible();
 
   await page.locator('[data-test="username"]').fill('standard_user');
   await page.locator('[data-test="password"]').fill('secret_sauce');
+  await expect(page.locator('[data-test="username"]')).toHaveValue('standard_user');
+  await expect(page.locator('[data-test="password"]')).toHaveValue('secret_sauce');
   // Step: Submit credentials to open the inventory.
   await page.locator('[data-test="login-button"]').click();
 
@@ -88,6 +106,9 @@ test('user can purchase one in-stock product', async ({ page }) => {
   await page.locator('[data-test="lastName"]').fill('Customer');
   await page.locator('[data-test="postalCode"]').fill('10001');
   await page.locator('[data-test="continue"]').click();
+  await expect(page.locator('[data-test="title"]')).toHaveText('Checkout: Overview');
+  await expect(page.locator('[data-test="inventory-item-name"]'))
+    .toHaveText(['Sauce Labs Backpack']);
 
   // Step: Verify totals and complete the purchase.
   await expect(page.locator('[data-test="subtotal-label"]')).toHaveText('Item total: $29.99');
@@ -124,6 +145,9 @@ test('user can select multiple products, remove one, and checkout the remaining 
   await page.locator('[data-test="lastName"]').fill('Customer');
   await page.locator('[data-test="postalCode"]').fill('10001');
   await page.locator('[data-test="continue"]').click();
+  await expect(page.locator('[data-test="title"]')).toHaveText('Checkout: Overview');
+  await expect(page.locator('[data-test="inventory-item-name"]'))
+    .toHaveText(['Sauce Labs Bike Light']);
 
   // Step: Verify the remaining item's totals and finish checkout.
   await expect(page.locator('[data-test="subtotal-label"]')).toHaveText('Item total: $9.99');
@@ -141,12 +165,19 @@ test('checkout requires a first name', async ({ page }) => {
     .filter({ hasText: 'Sauce Labs Backpack' })
     .getByRole('button', { name: 'Add to cart' })
     .click();
+  await expect(page.locator('[data-test="shopping-cart-badge"]')).toHaveText('1');
   await page.locator('[data-test="shopping-cart-link"]').click();
+  await expect(page.locator('[data-test="inventory-item-name"]'))
+    .toHaveText(['Sauce Labs Backpack']);
   await page.locator('[data-test="checkout"]').click();
+  await expect(page.locator('[data-test="title"]')).toHaveText('Checkout: Your Information');
 
   // Step: Leave the first name blank and submit the other checkout details.
   await page.locator('[data-test="lastName"]').fill('Customer');
   await page.locator('[data-test="postalCode"]').fill('10001');
+  await expect(page.locator('[data-test="firstName"]')).toHaveValue('');
+  await expect(page.locator('[data-test="lastName"]')).toHaveValue('Customer');
+  await expect(page.locator('[data-test="postalCode"]')).toHaveValue('10001');
   await page.locator('[data-test="continue"]').click();
 
   // Step: Verify validation keeps the user on the information page.
@@ -206,8 +237,11 @@ test('error_user remains on checkout overview after Finish', async ({ page }) =>
 test('locked_out_user cannot log in', async ({ page }) => {
   // Step: Open SauceDemo and submit locked-account credentials.
   await page.goto('https://www.saucedemo.com/');
+  await expect(page.locator('[data-test="username"]')).toBeVisible();
   await page.locator('[data-test="username"]').fill('locked_out_user');
   await page.locator('[data-test="password"]').fill('secret_sauce');
+  await expect(page.locator('[data-test="username"]')).toHaveValue('locked_out_user');
+  await expect(page.locator('[data-test="password"]')).toHaveValue('secret_sauce');
   await page.locator('[data-test="login-button"]').click();
 
   // Step: Verify the rejection message and that login did not navigate.

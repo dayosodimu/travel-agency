@@ -4,17 +4,24 @@ import { test, expect, type Page } from '@playwright/test';
 async function searchFlights(page: Page, fromPort: string, toPort: string) {
   // Step: Open the travel agency search form.
   await page.goto('https://blazedemo.com/');
+  await expect(page.getByRole('heading', { name: 'Welcome to the Simple Travel Agency!' })).toBeVisible();
   // Step: Choose the departure and arrival cities.
   await page.locator('select[name="fromPort"]').selectOption(fromPort);
   await page.locator('select[name="toPort"]').selectOption(toPort);
+  await expect(page.locator('select[name="fromPort"]')).toHaveValue(fromPort);
+  await expect(page.locator('select[name="toPort"]')).toHaveValue(toPort);
   // Step: Submit the route and load matching flights.
   await page.getByRole('button', { name: 'Find Flights' }).click();
+  await expect(page.getByRole('heading', { name: `Flights from ${fromPort} to ${toPort}:` })).toBeVisible();
+  await expect(page.locator('table tbody tr')).toHaveCount(5);
 }
 
 // Section: Flight selection
 async function chooseFirstFlight(page: Page) {
   // Step: Select the first flight returned for the chosen route.
   await page.getByRole('button', { name: 'Choose This Flight' }).first().click();
+  await expect(page).toHaveURL(/purchase\.php/);
+  await expect(page.locator('input[name="inputName"]')).toBeVisible();
 }
 
 // Section: Passenger and payment details
@@ -31,6 +38,16 @@ async function fillBookingDetails(page: Page, passengerName: string) {
   await page.locator('input[name="creditCardMonth"]').fill('12');
   await page.locator('input[name="creditCardYear"]').fill('2030');
   await page.locator('input[name="nameOnCard"]').fill('Taylor Traveler');
+  await expect(page.locator('input[name="inputName"]')).toHaveValue(passengerName);
+  await expect(page.locator('input[name="address"]')).toHaveValue('123 Test Street');
+  await expect(page.locator('input[name="city"]')).toHaveValue('Boston');
+  await expect(page.locator('input[name="state"]')).toHaveValue('MA');
+  await expect(page.locator('input[name="zipCode"]')).toHaveValue('02108');
+  await expect(page.locator('select[name="cardType"]')).toHaveValue('visa');
+  await expect(page.locator('input[name="creditCardNumber"]')).toHaveValue('4111111111111111');
+  await expect(page.locator('input[name="creditCardMonth"]')).toHaveValue('12');
+  await expect(page.locator('input[name="creditCardYear"]')).toHaveValue('2030');
+  await expect(page.locator('input[name="nameOnCard"]')).toHaveValue('Taylor Traveler');
 }
 
 // Section: Search the primary route

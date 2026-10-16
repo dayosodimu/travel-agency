@@ -13,9 +13,11 @@ test('has title', async ({ page }) => {
 test('get started link', async ({ page }) => {
   // Step: Open the documentation homepage.
   await page.goto('https://playwright.dev/');
+  await expect(page).toHaveTitle(/Playwright/);
 
   // Step: Navigate to the getting-started documentation.
   await page.getByRole('link', { name: 'Get started' }).click();
+  await expect(page).toHaveURL(/\/docs\/intro/);
 
   // Step: Verify that the installation guide is displayed.
   await expect(page.getByRole('heading', { name: 'Installation' })).toBeVisible();
